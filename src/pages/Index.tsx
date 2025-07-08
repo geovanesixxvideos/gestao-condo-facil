@@ -20,33 +20,13 @@ const Index = () => {
       case "incidents":
         return <IncidentsList />;
       case "notices":
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Avisos</h2>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </div>
-        );
+        return <NoticesList />;
       case "financial":
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Financeiro</h2>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </div>
-        );
+        return <FinancialManager />;
       case "bookings":
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Reservas</h2>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </div>
-        );
+        return <BookingsList />;
       case "settings":
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold mb-4">Configurações</h2>
-            <p className="text-muted-foreground">Em desenvolvimento...</p>
-          </div>
-        );
+        return <SettingsPanel />;
       default:
         return <Dashboard />;
     }
