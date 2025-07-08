@@ -8,7 +8,10 @@ import FinancialManager from "@/components/financial/FinancialManager";
 import BookingsList from "@/components/bookings/BookingsList";
 import SettingsPanel from "@/components/settings/SettingsPanel";
 
+console.log('Index.tsx carregado');
+
 const Index = () => {
+  console.log('Index component renderizando...');
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const renderContent = () => {
