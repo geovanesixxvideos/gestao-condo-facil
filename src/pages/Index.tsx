@@ -3,6 +3,10 @@ import Layout from "@/components/layout/Layout";
 import Dashboard from "@/components/dashboard/Dashboard";
 import ResidentsList from "@/components/residents/ResidentsList";
 import IncidentsList from "@/components/incidents/IncidentsList";
+import NoticesList from "@/components/notices/NoticesList";
+import FinancialManager from "@/components/financial/FinancialManager";
+import BookingsList from "@/components/bookings/BookingsList";
+import SettingsPanel from "@/components/settings/SettingsPanel";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
