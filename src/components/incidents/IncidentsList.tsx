@@ -3,7 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User, Edit, Trash2, Eye } from "lucide-react";
 
 interface Incident {
   id: string;
@@ -18,7 +22,7 @@ interface Incident {
   resolvedAt?: string;
 }
 
-const mockIncidents: Incident[] = [
+const initialIncidents: Incident[] = [
   {
     id: "1",
     title: "Vazamento no banheiro",
@@ -67,10 +71,25 @@ const mockIncidents: Incident[] = [
 ];
 
 export default function IncidentsList() {
+  const { toast } = useToast();
+  const [incidents, setIncidents] = useState<Incident[]>(initialIncidents);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [formData, setFormData] = useState<Omit<Incident, 'id' | 'createdAt' | 'resolvedAt'>>({
+    title: "",
+    description: "",
+    apartment: "",
+    resident: "",
+    status: "open",
+    priority: "medium",
+    category: "maintenance"
+  });
 
-  const filteredIncidents = mockIncidents.filter(incident => {
+  const filteredIncidents = incidents.filter(incident => {
     const matchesSearch = incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          incident.apartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          incident.resident.toLowerCase().includes(searchTerm.toLowerCase());
@@ -137,6 +156,97 @@ export default function IncidentsList() {
     });
   };
 
+  // CRUD Functions
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      description: "",
+      apartment: "",
+      resident: "",
+      status: "open",
+      priority: "medium",
+      category: "maintenance"
+    });
+  };
+
+  const handleCreate = () => {
+    const newIncident: Incident = {
+      id: Date.now().toString(),
+      ...formData,
+      createdAt: new Date().toISOString()
+    };
+    
+    setIncidents([...incidents, newIncident]);
+    resetForm();
+    setShowCreateDialog(false);
+    toast({
+      title: "Ocorrência criada com sucesso!",
+      description: `${newIncident.title} foi registrada no sistema.`,
+    });
+  };
+
+  const handleEdit = (incident: Incident) => {
+    setSelectedIncident(incident);
+    setFormData({
+      title: incident.title,
+      description: incident.description,
+      apartment: incident.apartment,
+      resident: incident.resident,
+      status: incident.status,
+      priority: incident.priority,
+      category: incident.category
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedIncident) return;
+    
+    const updatedIncidents = incidents.map(incident =>
+      incident.id === selectedIncident.id
+        ? { ...incident, ...formData }
+        : incident
+    );
+    
+    setIncidents(updatedIncidents);
+    resetForm();
+    setShowEditDialog(false);
+    setSelectedIncident(null);
+    toast({
+      title: "Ocorrência atualizada com sucesso!",
+      description: `As informações foram atualizadas.`,
+    });
+  };
+
+  const handleResolve = (incident: Incident) => {
+    const updatedIncidents = incidents.map(i =>
+      i.id === incident.id
+        ? { ...i, status: "resolved" as const, resolvedAt: new Date().toISOString() }
+        : i
+    );
+    
+    setIncidents(updatedIncidents);
+    toast({
+      title: "Ocorrência resolvida!",
+      description: `${incident.title} foi marcada como resolvida.`,
+    });
+  };
+
+  const handleDelete = (incident: Incident) => {
+    const updatedIncidents = incidents.filter(i => i.id !== incident.id);
+    setIncidents(updatedIncidents);
+    toast({
+      title: "Ocorrência removida",
+      description: `${incident.title} foi removida do sistema.`,
+      variant: "destructive"
+    });
+  };
+
+  const handleViewDetails = (incident: Incident) => {
+    setSelectedIncident(incident);
+    setShowDetailsDialog(true);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -147,10 +257,106 @@ export default function IncidentsList() {
             Gerencie e acompanhe todas as ocorrências do condomínio
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:opacity-90 shadow-primary">
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Ocorrência
-        </Button>
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary hover:opacity-90 shadow-primary">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Ocorrência
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Criar Nova Ocorrência</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Título</label>
+                <Input
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  placeholder="Título da ocorrência"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Descrição</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  placeholder="Descreva a ocorrência em detalhes..."
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Apartamento</label>
+                  <Input
+                    value={formData.apartment}
+                    onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                    placeholder="Apt 101 ou Área Comum"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Morador</label>
+                  <Input
+                    value={formData.resident}
+                    onChange={(e) => setFormData({...formData, resident: e.target.value})}
+                    placeholder="Nome do morador"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Prioridade</label>
+                  <select 
+                    className="w-full p-2 border rounded-lg"
+                    value={formData.priority}
+                    onChange={(e) => setFormData({...formData, priority: e.target.value as any})}
+                  >
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Categoria</label>
+                  <select 
+                    className="w-full p-2 border rounded-lg"
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value as any})}
+                  >
+                    <option value="maintenance">Manutenção</option>
+                    <option value="security">Segurança</option>
+                    <option value="noise">Ruído</option>
+                    <option value="cleaning">Limpeza</option>
+                    <option value="other">Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <select 
+                    className="w-full p-2 border rounded-lg"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                  >
+                    <option value="open">Aberta</option>
+                    <option value="in_progress">Em Andamento</option>
+                    <option value="resolved">Resolvida</option>
+                    <option value="closed">Fechada</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleCreate} className="bg-gradient-primary">
+                  Criar Ocorrência
+                </Button>
+                <Button variant="outline" onClick={() => {setShowCreateDialog(false); resetForm();}}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -280,17 +486,42 @@ export default function IncidentsList() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(incident)}>
+                      <Edit className="h-4 w-4 mr-1" />
                       Editar
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleViewDetails(incident)}>
+                      <Eye className="h-4 w-4 mr-1" />
                       Detalhes
                     </Button>
                     {incident.status === "open" && (
-                      <Button size="sm" className="bg-success hover:bg-success/90">
+                      <Button size="sm" className="bg-success hover:bg-success/90" onClick={() => handleResolve(incident)}>
+                        <CheckCircle className="h-4 w-4 mr-1" />
                         Resolver
                       </Button>
                     )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Excluir
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir a ocorrência "{incident.title}"? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(incident)} className="bg-destructive text-destructive-foreground">
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </div>
@@ -298,6 +529,173 @@ export default function IncidentsList() {
           })}
         </div>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Ocorrência</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Título</label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                placeholder="Título da ocorrência"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Descrição</label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                placeholder="Descreva a ocorrência em detalhes..."
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Apartamento</label>
+                <Input
+                  value={formData.apartment}
+                  onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                  placeholder="Apt 101 ou Área Comum"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Morador</label>
+                <Input
+                  value={formData.resident}
+                  onChange={(e) => setFormData({...formData, resident: e.target.value})}
+                  placeholder="Nome do morador"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium">Prioridade</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({...formData, priority: e.target.value as any})}
+                >
+                  <option value="low">Baixa</option>
+                  <option value="medium">Média</option>
+                  <option value="high">Alta</option>
+                  <option value="urgent">Urgente</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Categoria</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value as any})}
+                >
+                  <option value="maintenance">Manutenção</option>
+                  <option value="security">Segurança</option>
+                  <option value="noise">Ruído</option>
+                  <option value="cleaning">Limpeza</option>
+                  <option value="other">Outros</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Status</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                >
+                  <option value="open">Aberta</option>
+                  <option value="in_progress">Em Andamento</option>
+                  <option value="resolved">Resolvida</option>
+                  <option value="closed">Fechada</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleUpdate} className="bg-gradient-primary">
+                Salvar Alterações
+              </Button>
+              <Button variant="outline" onClick={() => {setShowEditDialog(false); resetForm();}}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Ocorrência</DialogTitle>
+          </DialogHeader>
+          {selectedIncident && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Título</label>
+                <p className="text-lg font-medium">{selectedIncident.title}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                <p className="text-base">{selectedIncident.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Apartamento</label>
+                  <p className="text-lg font-medium">{selectedIncident.apartment}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Morador</label>
+                  <p className="text-lg font-medium">{selectedIncident.resident}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <Badge className={getStatusConfig(selectedIncident.status).className}>
+                    {getStatusConfig(selectedIncident.status).label}
+                  </Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Prioridade</label>
+                  <Badge variant="outline" className={getPriorityConfig(selectedIncident.priority).className}>
+                    {getPriorityConfig(selectedIncident.priority).label}
+                  </Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Categoria</label>
+                  <Badge variant="outline" className={getCategoryConfig(selectedIncident.category).className}>
+                    {getCategoryConfig(selectedIncident.category).label}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Criada em</label>
+                  <p className="text-base">{formatDate(selectedIncident.createdAt)}</p>
+                </div>
+                {selectedIncident.resolvedAt && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Resolvida em</label>
+                    <p className="text-base">{formatDate(selectedIncident.resolvedAt)}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => {setShowDetailsDialog(false); handleEdit(selectedIncident);}} className="bg-gradient-primary">
+                  Editar
+                </Button>
+                <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,7 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Filter, User, Phone, Mail, MapPin } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Plus, Filter, User, Phone, Mail, MapPin, Edit, Trash2, Eye } from "lucide-react";
 
 interface Resident {
   id: string;
@@ -16,7 +19,7 @@ interface Resident {
   joinDate: string;
 }
 
-const mockResidents: Resident[] = [
+const initialResidents: Resident[] = [
   {
     id: "1",
     name: "Maria Silva Santos",
@@ -60,10 +63,25 @@ const mockResidents: Resident[] = [
 ];
 
 export default function ResidentsList() {
+  const { toast } = useToast();
+  const [residents, setResidents] = useState<Resident[]>(initialResidents);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [formData, setFormData] = useState<Omit<Resident, 'id'>>({
+    name: "",
+    apartment: "",
+    phone: "",
+    email: "",
+    status: "active",
+    type: "owner",
+    joinDate: new Date().toISOString().split('T')[0]
+  });
 
-  const filteredResidents = mockResidents.filter(resident => {
+  const filteredResidents = residents.filter(resident => {
     const matchesSearch = resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resident.apartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resident.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -93,6 +111,86 @@ export default function ResidentsList() {
     return typeConfig[type as keyof typeof typeConfig] || typeConfig.owner;
   };
 
+  // CRUD Functions
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      apartment: "",
+      phone: "",
+      email: "",
+      status: "active",
+      type: "owner",
+      joinDate: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleCreate = () => {
+    const newResident: Resident = {
+      id: Date.now().toString(),
+      ...formData
+    };
+    
+    setResidents([...residents, newResident]);
+    resetForm();
+    setShowCreateDialog(false);
+    toast({
+      title: "Morador criado com sucesso!",
+      description: `${newResident.name} foi adicionado ao sistema.`,
+    });
+  };
+
+  const handleEdit = (resident: Resident) => {
+    setSelectedResident(resident);
+    setFormData({
+      name: resident.name,
+      apartment: resident.apartment,
+      phone: resident.phone,
+      email: resident.email,
+      status: resident.status,
+      type: resident.type,
+      joinDate: resident.joinDate
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdate = () => {
+    if (!selectedResident) return;
+    
+    const updatedResidents = residents.map(resident =>
+      resident.id === selectedResident.id
+        ? { ...resident, ...formData }
+        : resident
+    );
+    
+    setResidents(updatedResidents);
+    resetForm();
+    setShowEditDialog(false);
+    setSelectedResident(null);
+    toast({
+      title: "Morador atualizado com sucesso!",
+      description: `As informações foram atualizadas.`,
+    });
+  };
+
+  const handleDelete = (resident: Resident) => {
+    const updatedResidents = residents.filter(r => r.id !== resident.id);
+    setResidents(updatedResidents);
+    toast({
+      title: "Morador removido",
+      description: `${resident.name} foi removido do sistema.`,
+      variant: "destructive"
+    });
+  };
+
+  const handleViewDetails = (resident: Resident) => {
+    setSelectedResident(resident);
+    setShowDetailsDialog(true);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -103,10 +201,100 @@ export default function ResidentsList() {
             Gerencie os moradores e unidades do condomínio
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:opacity-90 shadow-primary">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Morador
-        </Button>
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary hover:opacity-90 shadow-primary">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Morador
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Criar Novo Morador</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Nome Completo</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Nome completo do morador"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Apartamento</label>
+                  <Input
+                    value={formData.apartment}
+                    onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                    placeholder="Apt 101"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Telefone</label>
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    placeholder="(11) 99999-9999"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <select 
+                    className="w-full p-2 border rounded-lg"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                  >
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                    <option value="pending">Pendente</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Tipo</label>
+                  <select 
+                    className="w-full p-2 border rounded-lg"
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                  >
+                    <option value="owner">Proprietário</option>
+                    <option value="renter">Inquilino</option>
+                    <option value="authorized">Autorizado</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Data de Ingresso</label>
+                  <Input
+                    type="date"
+                    value={formData.joinDate}
+                    onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleCreate} className="bg-gradient-primary">
+                  Criar Morador
+                </Button>
+                <Button variant="outline" onClick={() => {setShowCreateDialog(false); resetForm();}}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -219,18 +407,191 @@ export default function ResidentsList() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(resident)}>
+                    <Edit className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => handleViewDetails(resident)}>
+                    <Eye className="h-4 w-4 mr-1" />
                     Detalhes
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Excluir
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir {resident.name}? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(resident)} className="bg-destructive text-destructive-foreground">
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Morador</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Nome Completo</label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  placeholder="Nome completo do morador"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Apartamento</label>
+                <Input
+                  value={formData.apartment}
+                  onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                  placeholder="Apt 101"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Telefone</label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm font-medium">Status</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                >
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                  <option value="pending">Pendente</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Tipo</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={formData.type}
+                  onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                >
+                  <option value="owner">Proprietário</option>
+                  <option value="renter">Inquilino</option>
+                  <option value="authorized">Autorizado</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Data de Ingresso</label>
+                <Input
+                  type="date"
+                  value={formData.joinDate}
+                  onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleUpdate} className="bg-gradient-primary">
+                Salvar Alterações
+              </Button>
+              <Button variant="outline" onClick={() => {setShowEditDialog(false); resetForm();}}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Morador</DialogTitle>
+          </DialogHeader>
+          {selectedResident && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
+                  <p className="text-lg font-medium">{selectedResident.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Apartamento</label>
+                  <p className="text-lg font-medium">{selectedResident.apartment}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Telefone</label>
+                  <p className="text-lg font-medium">{selectedResident.phone}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-lg font-medium">{selectedResident.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <Badge className={getStatusBadge(selectedResident.status).className}>
+                    {getStatusBadge(selectedResident.status).label}
+                  </Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                  <Badge variant="outline" className={getTypeBadge(selectedResident.type).className}>
+                    {getTypeBadge(selectedResident.type).label}
+                  </Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Data de Ingresso</label>
+                  <p className="text-lg font-medium">{formatDate(selectedResident.joinDate)}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => {setShowDetailsDialog(false); handleEdit(selectedResident);}} className="bg-gradient-primary">
+                  Editar
+                </Button>
+                <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
