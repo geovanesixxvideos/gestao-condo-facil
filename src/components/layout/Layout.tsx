@@ -11,6 +11,7 @@ interface LayoutProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
+  { id: "condominiums", label: "Condomínios", icon: Building2 },
   { id: "residents", label: "Moradores", icon: Users },
   { id: "incidents", label: "Ocorrências", icon: AlertTriangle },
   { id: "notices", label: "Avisos", icon: Megaphone },

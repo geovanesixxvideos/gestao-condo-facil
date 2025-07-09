@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import Dashboard from "@/components/dashboard/Dashboard";
+import CondominiumsList from "@/components/condominiums/CondominiumsList";
 import ResidentsList from "@/components/residents/ResidentsList";
 import IncidentsList from "@/components/incidents/IncidentsList";
 import NoticesList from "@/components/notices/NoticesList";
@@ -18,6 +19,8 @@ const Index = () => {
     switch (activeTab) {
       case "dashboard":
         return <Dashboard />;
+      case "condominiums":
+        return <CondominiumsList />;
       case "residents":
         return <ResidentsList />;
       case "incidents":
