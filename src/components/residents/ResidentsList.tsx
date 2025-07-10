@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Filter, User, Phone, Mail, MapPin, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Plus, Filter, User, Phone, Mail, MapPin, Edit, Trash2, Eye, Building2 } from "lucide-react";
 
 interface Resident {
   id: string;
   name: string;
   apartment: string;
+  condominium: string;
   phone: string;
   email: string;
   status: "active" | "inactive" | "pending";
@@ -24,6 +25,7 @@ const initialResidents: Resident[] = [
     id: "1",
     name: "Maria Silva Santos",
     apartment: "Apt 101",
+    condominium: "Residencial Jardim das Flores",
     phone: "(11) 99999-9999",
     email: "maria.silva@email.com",
     status: "active",
@@ -33,7 +35,8 @@ const initialResidents: Resident[] = [
   {
     id: "2",
     name: "João Oliveira",
-    apartment: "Apt 102", 
+    apartment: "Apt 102",
+    condominium: "Residencial Jardim das Flores", 
     phone: "(11) 88888-8888",
     email: "joao.oliveira@email.com",
     status: "active",
@@ -44,6 +47,7 @@ const initialResidents: Resident[] = [
     id: "3",
     name: "Ana Costa",
     apartment: "Apt 205",
+    condominium: "Condomínio Vila Verde",
     phone: "(11) 77777-7777", 
     email: "ana.costa@email.com",
     status: "pending",
@@ -54,6 +58,7 @@ const initialResidents: Resident[] = [
     id: "4",
     name: "Pedro Santos",
     apartment: "Apt 304",
+    condominium: "Edifício Comercial Central",
     phone: "(11) 66666-6666",
     email: "pedro.santos@email.com", 
     status: "active",
@@ -74,6 +79,7 @@ export default function ResidentsList() {
   const [formData, setFormData] = useState<Omit<Resident, 'id'>>({
     name: "",
     apartment: "",
+    condominium: "",
     phone: "",
     email: "",
     status: "active",
@@ -84,6 +90,7 @@ export default function ResidentsList() {
   const filteredResidents = residents.filter(resident => {
     const matchesSearch = resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resident.apartment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         resident.condominium.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resident.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = filterStatus === "all" || resident.status === filterStatus;
@@ -116,6 +123,7 @@ export default function ResidentsList() {
     setFormData({
       name: "",
       apartment: "",
+      condominium: "",
       phone: "",
       email: "",
       status: "active",
@@ -144,6 +152,7 @@ export default function ResidentsList() {
     setFormData({
       name: resident.name,
       apartment: resident.apartment,
+      condominium: resident.condominium,
       phone: resident.phone,
       email: resident.email,
       status: resident.status,
@@ -208,53 +217,77 @@ export default function ResidentsList() {
               Novo Morador
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Criar Novo Morador</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Nome Completo</label>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nome Completo *</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     placeholder="Nome completo do morador"
+                    className="h-10"
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Apartamento</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Condomínio *</label>
                   <Input
-                    value={formData.apartment}
-                    onChange={(e) => setFormData({...formData, apartment: e.target.value})}
-                    placeholder="Apt 101"
+                    value={formData.condominium}
+                    onChange={(e) => setFormData({...formData, condominium: e.target.value})}
+                    placeholder="Nome do condomínio"
+                    className="h-10"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Apartamento/Unidade *</label>
+                  <Input
+                    value={formData.apartment}
+                    onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                    placeholder="Apt 101, Sala 205, etc."
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Telefone</label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     placeholder="(11) 99999-9999"
+                    className="h-10"
                   />
                 </div>
-                <div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="email@exemplo.com"
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data de Ingresso</label>
+                  <Input
+                    type="date"
+                    value={formData.joinDate}
+                    onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                    className="h-10"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Status</label>
                   <select 
-                    className="w-full p-2 border rounded-lg"
+                    className="w-full h-10 p-2 border rounded-lg bg-background"
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value as any})}
                   >
@@ -263,10 +296,10 @@ export default function ResidentsList() {
                     <option value="pending">Pendente</option>
                   </select>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Tipo</label>
                   <select 
-                    className="w-full p-2 border rounded-lg"
+                    className="w-full h-10 p-2 border rounded-lg bg-background"
                     value={formData.type}
                     onChange={(e) => setFormData({...formData, type: e.target.value as any})}
                   >
@@ -275,21 +308,13 @@ export default function ResidentsList() {
                     <option value="authorized">Autorizado</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Data de Ingresso</label>
-                  <Input
-                    type="date"
-                    value={formData.joinDate}
-                    onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                  />
-                </div>
               </div>
-              <div className="flex gap-2 pt-4">
-                <Button onClick={handleCreate} className="bg-gradient-primary">
-                  Criar Morador
-                </Button>
+              <div className="flex justify-end gap-3 pt-6 border-t">
                 <Button variant="outline" onClick={() => {setShowCreateDialog(false); resetForm();}}>
                   Cancelar
+                </Button>
+                <Button onClick={handleCreate} className="bg-gradient-primary min-w-[120px]">
+                  Criar Morador
                 </Button>
               </div>
             </div>
@@ -303,7 +328,7 @@ export default function ResidentsList() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome, apartamento ou email..."
+              placeholder="Buscar por nome, apartamento, condomínio ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -390,7 +415,11 @@ export default function ResidentsList() {
                         {getTypeBadge(resident.type).label}
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Building2 className="h-4 w-4 mr-2" />
+                        {resident.condominium}
+                      </div>
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-2" />
                         {resident.apartment}
@@ -446,53 +475,77 @@ export default function ResidentsList() {
 
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Morador</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Nome Completo</label>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nome Completo *</label>
                 <Input
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="Nome completo do morador"
+                  className="h-10"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Apartamento</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Condomínio *</label>
                 <Input
-                  value={formData.apartment}
-                  onChange={(e) => setFormData({...formData, apartment: e.target.value})}
-                  placeholder="Apt 101"
+                  value={formData.condominium}
+                  onChange={(e) => setFormData({...formData, condominium: e.target.value})}
+                  placeholder="Nome do condomínio"
+                  className="h-10"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Apartamento/Unidade *</label>
+                <Input
+                  value={formData.apartment}
+                  onChange={(e) => setFormData({...formData, apartment: e.target.value})}
+                  placeholder="Apt 101, Sala 205, etc."
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Telefone</label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   placeholder="(11) 99999-9999"
+                  className="h-10"
                 />
               </div>
-              <div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Email</label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="email@exemplo.com"
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Data de Ingresso</label>
+                <Input
+                  type="date"
+                  value={formData.joinDate}
+                  onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
+                  className="h-10"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
                 <select 
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full h-10 p-2 border rounded-lg bg-background"
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value as any})}
                 >
@@ -501,10 +554,10 @@ export default function ResidentsList() {
                   <option value="pending">Pendente</option>
                 </select>
               </div>
-              <div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo</label>
                 <select 
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full h-10 p-2 border rounded-lg bg-background"
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value as any})}
                 >
@@ -513,21 +566,13 @@ export default function ResidentsList() {
                   <option value="authorized">Autorizado</option>
                 </select>
               </div>
-              <div>
-                <label className="text-sm font-medium">Data de Ingresso</label>
-                <Input
-                  type="date"
-                  value={formData.joinDate}
-                  onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                />
-              </div>
             </div>
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleUpdate} className="bg-gradient-primary">
-                Salvar Alterações
-              </Button>
+            <div className="flex justify-end gap-3 pt-6 border-t">
               <Button variant="outline" onClick={() => {setShowEditDialog(false); resetForm();}}>
                 Cancelar
+              </Button>
+              <Button onClick={handleUpdate} className="bg-gradient-primary min-w-[120px]">
+                Salvar Alterações
               </Button>
             </div>
           </div>
@@ -536,56 +581,62 @@ export default function ResidentsList() {
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Detalhes do Morador</DialogTitle>
           </DialogHeader>
           {selectedResident && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Nome Completo</label>
                   <p className="text-lg font-medium">{selectedResident.name}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Apartamento</label>
-                  <p className="text-lg font-medium">{selectedResident.apartment}</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Condomínio</label>
+                  <p className="text-lg font-medium">{selectedResident.condominium}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Apartamento/Unidade</label>
+                  <p className="text-lg font-medium">{selectedResident.apartment}</p>
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Telefone</label>
                   <p className="text-lg font-medium">{selectedResident.phone}</p>
                 </div>
-                <div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
                   <p className="text-lg font-medium">{selectedResident.email}</p>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Data de Ingresso</label>
+                  <p className="text-lg font-medium">{formatDate(selectedResident.joinDate)}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
                   <Badge className={getStatusBadge(selectedResident.status).className}>
                     {getStatusBadge(selectedResident.status).label}
                   </Badge>
                 </div>
-                <div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Tipo</label>
                   <Badge variant="outline" className={getTypeBadge(selectedResident.type).className}>
                     {getTypeBadge(selectedResident.type).label}
                   </Badge>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Data de Ingresso</label>
-                  <p className="text-lg font-medium">{formatDate(selectedResident.joinDate)}</p>
-                </div>
               </div>
-              <div className="flex gap-2 pt-4">
-                <Button onClick={() => {setShowDetailsDialog(false); handleEdit(selectedResident);}} className="bg-gradient-primary">
-                  Editar
-                </Button>
+              <div className="flex justify-end gap-3 pt-6 border-t">
                 <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>
                   Fechar
+                </Button>
+                <Button onClick={() => {setShowDetailsDialog(false); handleEdit(selectedResident);}} className="bg-gradient-primary">
+                  Editar
                 </Button>
               </div>
             </div>

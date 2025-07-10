@@ -190,117 +190,128 @@ export default function CondominiumsList() {
               Novo Condomínio
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Novo Condomínio</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Nome*</Label>
-                <Input
-                  id="name"
-                  value={formData.name || ""}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="col-span-3"
-                  placeholder="Nome do condomínio"
-                />
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome do Condomínio *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name || ""}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Nome do condomínio"
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="units">Número de Unidades</Label>
+                  <Input
+                    id="units"
+                    type="number"
+                    value={formData.units || ""}
+                    onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 0 })}
+                    placeholder="Número de unidades"
+                    className="h-10"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">Endereço*</Label>
+              <div className="space-y-2">
+                <Label htmlFor="address">Endereço Completo *</Label>
                 <Input
                   id="address"
                   value={formData.address || ""}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="col-span-3"
-                  placeholder="Endereço completo"
+                  placeholder="Endereço completo do condomínio"
+                  className="h-10"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="units" className="text-right">Unidades</Label>
-                <Input
-                  id="units"
-                  type="number"
-                  value={formData.units || ""}
-                  onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 0 })}
-                  className="col-span-3"
-                  placeholder="Número de unidades"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="manager">Nome do Síndico *</Label>
+                  <Input
+                    id="manager"
+                    value={formData.manager || ""}
+                    onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                    placeholder="Nome do síndico"
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefone de Contato</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone || ""}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(11) 99999-9999"
+                    className="h-10"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="manager" className="text-right">Síndico*</Label>
-                <Input
-                  id="manager"
-                  value={formData.manager || ""}
-                  onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
-                  className="col-span-3"
-                  placeholder="Nome do síndico"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email de Contato</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email || ""}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="email@exemplo.com"
+                    className="h-10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo de Condomínio</Label>
+                  <Select
+                    value={formData.type || "Residencial"}
+                    onValueChange={(value) => setFormData({ ...formData, type: value as "Residencial" | "Comercial" | "Misto" })}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Residencial">Residencial</SelectItem>
+                      <SelectItem value="Comercial">Comercial</SelectItem>
+                      <SelectItem value="Misto">Misto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">Telefone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone || ""}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="col-span-3"
-                  placeholder="(11) 99999-9999"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email || ""}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="col-span-3"
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">Tipo</Label>
-                <Select
-                  value={formData.type || "Residencial"}
-                  onValueChange={(value) => setFormData({ ...formData, type: value as "Residencial" | "Comercial" | "Misto" })}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Residencial">Residencial</SelectItem>
-                    <SelectItem value="Comercial">Comercial</SelectItem>
-                    <SelectItem value="Misto">Misto</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">Status</Label>
-                <Select
-                  value={formData.status || "Ativo"}
-                  onValueChange={(value) => setFormData({ ...formData, status: value as "Ativo" | "Inativo" })}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description || ""}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="col-span-3"
-                  placeholder="Descrição do condomínio (opcional)"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status || "Ativo"}
+                    onValueChange={(value) => setFormData({ ...formData, status: value as "Ativo" | "Inativo" })}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description || ""}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descrição do condomínio (opcional)"
+                    rows={2}
+                  />
+                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="submit" onClick={handleCreate} className="bg-gradient-primary hover:opacity-90">
+            <DialogFooter className="pt-6 border-t">
+              <Button variant="outline" onClick={() => {setIsCreateDialogOpen(false); setFormData({});}}>
+                Cancelar
+              </Button>
+              <Button type="submit" onClick={handleCreate} className="bg-gradient-primary hover:opacity-90 min-w-[120px]">
                 Cadastrar
               </Button>
             </DialogFooter>
