@@ -190,6 +190,121 @@ export default function CondominiumsList() {
               Novo Condomínio
             </Button>
           </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Novo Condomínio</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Nome*</Label>
+                <Input
+                  id="name"
+                  value={formData.name || ""}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="col-span-3"
+                  placeholder="Nome do condomínio"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">Endereço*</Label>
+                <Input
+                  id="address"
+                  value={formData.address || ""}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="col-span-3"
+                  placeholder="Endereço completo"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="units" className="text-right">Unidades</Label>
+                <Input
+                  id="units"
+                  type="number"
+                  value={formData.units || ""}
+                  onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 0 })}
+                  className="col-span-3"
+                  placeholder="Número de unidades"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="manager" className="text-right">Síndico*</Label>
+                <Input
+                  id="manager"
+                  value={formData.manager || ""}
+                  onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                  className="col-span-3"
+                  placeholder="Nome do síndico"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone || ""}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="col-span-3"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="col-span-3"
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">Tipo</Label>
+                <Select
+                  value={formData.type || "Residencial"}
+                  onValueChange={(value) => setFormData({ ...formData, type: value as "Residencial" | "Comercial" | "Misto" })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Residencial">Residencial</SelectItem>
+                    <SelectItem value="Comercial">Comercial</SelectItem>
+                    <SelectItem value="Misto">Misto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">Status</Label>
+                <Select
+                  value={formData.status || "Ativo"}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as "Ativo" | "Inativo" })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description || ""}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="col-span-3"
+                  placeholder="Descrição do condomínio (opcional)"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" onClick={handleCreate} className="bg-gradient-primary hover:opacity-90">
+                Cadastrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </div>
 
@@ -371,129 +486,125 @@ export default function CondominiumsList() {
         </Card>
       )}
 
-      {/* Create/Edit Dialog */}
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {isCreateDialogOpen ? "Novo Condomínio" : "Editar Condomínio"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">Nome*</Label>
-            <Input
-              id="name"
-              value={formData.name || ""}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="col-span-3"
-              placeholder="Nome do condomínio"
-            />
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Editar Condomínio</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">Nome*</Label>
+              <Input
+                id="edit-name"
+                value={formData.name || ""}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="col-span-3"
+                placeholder="Nome do condomínio"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-address" className="text-right">Endereço*</Label>
+              <Input
+                id="edit-address"
+                value={formData.address || ""}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="col-span-3"
+                placeholder="Endereço completo"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-units" className="text-right">Unidades</Label>
+              <Input
+                id="edit-units"
+                type="number"
+                value={formData.units || ""}
+                onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 0 })}
+                className="col-span-3"
+                placeholder="Número de unidades"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-manager" className="text-right">Síndico*</Label>
+              <Input
+                id="edit-manager"
+                value={formData.manager || ""}
+                onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                className="col-span-3"
+                placeholder="Nome do síndico"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-phone" className="text-right">Telefone</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone || ""}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="col-span-3"
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-email" className="text-right">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="col-span-3"
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-type" className="text-right">Tipo</Label>
+              <Select
+                value={formData.type || "Residencial"}
+                onValueChange={(value) => setFormData({ ...formData, type: value as "Residencial" | "Comercial" | "Misto" })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Residencial">Residencial</SelectItem>
+                  <SelectItem value="Comercial">Comercial</SelectItem>
+                  <SelectItem value="Misto">Misto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">Status</Label>
+              <Select
+                value={formData.status || "Ativo"}
+                onValueChange={(value) => setFormData({ ...formData, status: value as "Ativo" | "Inativo" })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="edit-description" className="text-right">Descrição</Label>
+              <Textarea
+                id="edit-description"
+                value={formData.description || ""}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="col-span-3"
+                placeholder="Descrição do condomínio"
+                rows={3}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="address" className="text-right">Endereço*</Label>
-            <Input
-              id="address"
-              value={formData.address || ""}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="col-span-3"
-              placeholder="Endereço completo"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="units" className="text-right">Unidades</Label>
-            <Input
-              id="units"
-              type="number"
-              value={formData.units || ""}
-              onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 0 })}
-              className="col-span-3"
-              placeholder="Número de unidades"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="manager" className="text-right">Síndico*</Label>
-            <Input
-              id="manager"
-              value={formData.manager || ""}
-              onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
-              className="col-span-3"
-              placeholder="Nome do síndico"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="phone" className="text-right">Telefone</Label>
-            <Input
-              id="phone"
-              value={formData.phone || ""}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="col-span-3"
-              placeholder="(11) 99999-9999"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="email" className="text-right">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="col-span-3"
-              placeholder="email@exemplo.com"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="type" className="text-right">Tipo</Label>
-            <Select
-              value={formData.type || "Residencial"}
-              onValueChange={(value) => setFormData({ ...formData, type: value as "Residencial" | "Comercial" | "Misto" })}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Residencial">Residencial</SelectItem>
-                <SelectItem value="Comercial">Comercial</SelectItem>
-                <SelectItem value="Misto">Misto</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">Status</Label>
-            <Select
-              value={formData.status || "Ativo"}
-              onValueChange={(value) => setFormData({ ...formData, status: value as "Ativo" | "Inativo" })}
-            >
-              <SelectTrigger className="col-span-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Ativo">Ativo</SelectItem>
-                <SelectItem value="Inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="description" className="text-right">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="col-span-3"
-              placeholder="Descrição do condomínio"
-              rows={3}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            type="submit"
-            onClick={isCreateDialogOpen ? handleCreate : handleEdit}
-            className="bg-gradient-primary hover:opacity-90 text-white"
-          >
-            {isCreateDialogOpen ? "Cadastrar" : "Salvar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <Button type="submit" onClick={handleEdit} className="bg-gradient-primary hover:opacity-90">
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* View Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
