@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, Megaphone, Calendar, User, Eye, Pin, AlertCircle } from "lucide-react";
+import { Search, Plus, Megaphone, Calendar, User, Eye, Pin, AlertCircle, Building2, UserCheck } from "lucide-react";
 
 interface Notice {
   id: string;
@@ -17,6 +17,7 @@ interface Notice {
   category: "general" | "maintenance" | "financial" | "event" | "emergency";
   pinned: boolean;
   views: number;
+  condominium: string;
 }
 
 const mockNotices: Notice[] = [
@@ -29,7 +30,8 @@ const mockNotices: Notice[] = [
     priority: "high",
     category: "maintenance",
     pinned: true,
-    views: 45
+    views: 45,
+    condominium: "Residencial Jardim das Flores"
   },
   {
     id: "2", 
@@ -40,7 +42,8 @@ const mockNotices: Notice[] = [
     priority: "urgent",
     category: "general",
     pinned: true,
-    views: 78
+    views: 78,
+    condominium: "Edifício Vista Alegre"
   },
   {
     id: "3",
@@ -51,7 +54,8 @@ const mockNotices: Notice[] = [
     priority: "medium",
     category: "financial",
     pinned: false,
-    views: 32
+    views: 32,
+    condominium: "Condomínio Parque Real"
   },
   {
     id: "4",
@@ -62,11 +66,34 @@ const mockNotices: Notice[] = [
     priority: "low",
     category: "event",
     pinned: false,
-    views: 23
+    views: 23,
+    condominium: "Residencial Jardim das Flores"
   }
 ];
 
+// Simular usuário atual como síndico
+const currentUser = {
+  role: "sindico", // "sindico" | "morador" | "admin"
+  name: "João Silva"
+};
+
 export default function NoticesList() {
+  // Verificar se usuário é síndico
+  if (currentUser.role !== "sindico") {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="p-8 text-center shadow-medium">
+          <div className="flex justify-center mb-4">
+            <UserCheck className="h-16 w-16 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Acesso Restrito</h3>
+          <p className="text-muted-foreground">
+            Esta área é exclusiva para síndicos. Entre em contato com a administração para mais informações.
+          </p>
+        </Card>
+      </div>
+    );
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [showDialog, setShowDialog] = useState(false);
@@ -75,7 +102,8 @@ export default function NoticesList() {
     content: "",
     priority: "medium" as const,
     category: "general" as const,
-    pinned: false
+    pinned: false,
+    condominium: ""
   });
 
   const filteredNotices = mockNotices.filter(notice => {
@@ -132,7 +160,8 @@ export default function NoticesList() {
       content: "",
       priority: "medium",
       category: "general",
-      pinned: false
+      pinned: false,
+      condominium: ""
     });
     setShowDialog(false);
   };
@@ -175,6 +204,20 @@ export default function NoticesList() {
                   placeholder="Digite o conteúdo do aviso..."
                   rows={5}
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Condomínio</label>
+                <select 
+                  className="w-full p-2 border rounded-lg"
+                  value={newNotice.condominium}
+                  onChange={(e) => setNewNotice({...newNotice, condominium: e.target.value})}
+                >
+                  <option value="">Selecione o condomínio</option>
+                  <option value="Residencial Jardim das Flores">Residencial Jardim das Flores</option>
+                  <option value="Edifício Vista Alegre">Edifício Vista Alegre</option>
+                  <option value="Condomínio Parque Real">Condomínio Parque Real</option>
+                  <option value="Residencial Boa Vista">Residencial Boa Vista</option>
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -327,7 +370,11 @@ export default function NoticesList() {
                       <p className="text-muted-foreground mb-4 leading-relaxed">
                         {notice.content}
                       </p>
-                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <div className="flex items-center">
+                          <Building2 className="h-4 w-4 mr-2" />
+                          {notice.condominium}
+                        </div>
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-2" />
                           {notice.author}
