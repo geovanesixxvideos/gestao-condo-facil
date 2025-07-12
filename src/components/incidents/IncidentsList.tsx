@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User, Edit, Trash2, Eye, Download, FileImage, FileVideo } from "lucide-react";
+import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User, Edit, Trash2, Eye } from "lucide-react";
 
 interface Incident {
   id: string;
@@ -272,75 +272,6 @@ export default function IncidentsList() {
     }));
   };
 
-  const exportAsImage = (incident: Incident) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = 800;
-    canvas.height = 600;
-
-    // Background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Title
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 24px Arial';
-    ctx.fillText('Relatório de Ocorrência', 50, 50);
-
-    // Content
-    ctx.font = '16px Arial';
-    const lines = [
-      `Título: ${incident.title}`,
-      `Apartamento: ${incident.apartment}`,
-      `Morador: ${incident.resident}`,
-      `Status: ${getStatusConfig(incident.status).label}`,
-      `Prioridade: ${getPriorityConfig(incident.priority).label}`,
-      `Categoria: ${getCategoryConfig(incident.category).label}`,
-      `Criado em: ${formatDate(incident.createdAt)}`,
-      '',
-      'Descrição:',
-      ...incident.description.match(/.{1,80}/g) || []
-    ];
-
-    lines.forEach((line, index) => {
-      ctx.fillText(line, 50, 90 + (index * 25));
-    });
-
-    // Download
-    const link = document.createElement('a');
-    link.download = `ocorrencia-${incident.id}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  };
-
-  const exportAsVideo = (incident: Incident) => {
-    // Simulação de export para vídeo (seria necessário uma biblioteca específica para implementação real)
-    const data = {
-      title: incident.title,
-      apartment: incident.apartment,
-      resident: incident.resident,
-      status: getStatusConfig(incident.status).label,
-      priority: getPriorityConfig(incident.priority).label,
-      category: getCategoryConfig(incident.category).label,
-      createdAt: formatDate(incident.createdAt),
-      description: incident.description
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.download = `ocorrencia-${incident.id}-dados.json`;
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Dados exportados!",
-      description: "Os dados foram exportados como JSON. Para vídeo, seria necessário implementar uma biblioteca específica.",
-    });
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -654,24 +585,6 @@ export default function IncidentsList() {
                         Resolver
                       </Button>
                     )}
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={() => exportAsImage(incident)}
-                      className="text-primary border-primary hover:bg-primary hover:text-white"
-                    >
-                      <FileImage className="h-4 w-4 mr-1" />
-                      Exportar IMG
-                    </Button>
-                    <Button 
-                      size="sm"
-                      variant="outline"
-                      onClick={() => exportAsVideo(incident)}
-                      className="text-secondary border-secondary hover:bg-secondary hover:text-white"
-                    >
-                      <FileVideo className="h-4 w-4 mr-1" />
-                      Exportar Dados
-                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
