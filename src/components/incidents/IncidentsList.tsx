@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User, Edit, Trash2, Eye } from "lucide-react";
+import { Search, Plus, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, User, Edit, Trash2, Eye, Download, FileImage, FileVideo } from "lucide-react";
 
 interface Incident {
   id: string;
@@ -20,6 +20,8 @@ interface Incident {
   category: "maintenance" | "security" | "noise" | "cleaning" | "other";
   createdAt: string;
   resolvedAt?: string;
+  images?: string[];
+  videos?: string[];
 }
 
 const initialIncidents: Incident[] = [
@@ -86,7 +88,9 @@ export default function IncidentsList() {
     resident: "",
     status: "open",
     priority: "medium",
-    category: "maintenance"
+    category: "maintenance",
+    images: [],
+    videos: []
   });
 
   const filteredIncidents = incidents.filter(incident => {
@@ -165,7 +169,9 @@ export default function IncidentsList() {
       resident: "",
       status: "open",
       priority: "medium",
-      category: "maintenance"
+      category: "maintenance",
+      images: [],
+      videos: []
     });
   };
 
@@ -194,7 +200,9 @@ export default function IncidentsList() {
       resident: incident.resident,
       status: incident.status,
       priority: incident.priority,
-      category: incident.category
+      category: incident.category,
+      images: incident.images || [],
+      videos: incident.videos || []
     });
     setShowEditDialog(true);
   };
@@ -245,6 +253,93 @@ export default function IncidentsList() {
   const handleViewDetails = (incident: Incident) => {
     setSelectedIncident(incident);
     setShowDetailsDialog(true);
+  };
+
+  const handleFileUpload = (files: FileList, type: 'images' | 'videos') => {
+    const fileArray = Array.from(files);
+    const urls = fileArray.map(file => URL.createObjectURL(file));
+    
+    setFormData(prev => ({
+      ...prev,
+      [type]: [...(prev[type] || []), ...urls]
+    }));
+  };
+
+  const removeFile = (index: number, type: 'images' | 'videos') => {
+    setFormData(prev => ({
+      ...prev,
+      [type]: prev[type]?.filter((_, i) => i !== index) || []
+    }));
+  };
+
+  const exportAsImage = (incident: Incident) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Title
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('Relatório de Ocorrência', 50, 50);
+
+    // Content
+    ctx.font = '16px Arial';
+    const lines = [
+      `Título: ${incident.title}`,
+      `Apartamento: ${incident.apartment}`,
+      `Morador: ${incident.resident}`,
+      `Status: ${getStatusConfig(incident.status).label}`,
+      `Prioridade: ${getPriorityConfig(incident.priority).label}`,
+      `Categoria: ${getCategoryConfig(incident.category).label}`,
+      `Criado em: ${formatDate(incident.createdAt)}`,
+      '',
+      'Descrição:',
+      ...incident.description.match(/.{1,80}/g) || []
+    ];
+
+    lines.forEach((line, index) => {
+      ctx.fillText(line, 50, 90 + (index * 25));
+    });
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `ocorrencia-${incident.id}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
+  const exportAsVideo = (incident: Incident) => {
+    // Simulação de export para vídeo (seria necessário uma biblioteca específica para implementação real)
+    const data = {
+      title: incident.title,
+      apartment: incident.apartment,
+      resident: incident.resident,
+      status: getStatusConfig(incident.status).label,
+      priority: getPriorityConfig(incident.priority).label,
+      category: getCategoryConfig(incident.category).label,
+      createdAt: formatDate(incident.createdAt),
+      description: incident.description
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `ocorrencia-${incident.id}-dados.json`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Dados exportados!",
+      description: "Os dados foram exportados como JSON. Para vídeo, seria necessário implementar uma biblioteca específica.",
+    });
   };
 
   return (
@@ -346,6 +441,65 @@ export default function IncidentsList() {
                   </select>
                 </div>
               </div>
+              
+              {/* Upload de Imagens e Vídeos */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Imagens</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'images')}
+                    className="w-full p-2 border rounded-lg"
+                  />
+                  {formData.images && formData.images.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img src={image} alt={`Upload ${index + 1}`} className="w-full h-20 object-cover rounded" />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-1 right-1 h-6 w-6 p-0"
+                            onClick={() => removeFile(index, 'images')}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Vídeos</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="video/*"
+                    onChange={(e) => e.target.files && handleFileUpload(e.target.files, 'videos')}
+                    className="w-full p-2 border rounded-lg"
+                  />
+                  {formData.videos && formData.videos.length > 0 && (
+                    <div className="space-y-2 mt-2">
+                      {formData.videos.map((video, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 border rounded">
+                          <span className="text-sm">Vídeo {index + 1}</span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeFile(index, 'videos')}
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <div className="flex gap-2 pt-4">
                 <Button onClick={handleCreate} className="bg-gradient-primary">
                   Criar Ocorrência
@@ -485,7 +639,7 @@ export default function IncidentsList() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(incident)}>
                       <Edit className="h-4 w-4 mr-1" />
                       Editar
@@ -500,6 +654,24 @@ export default function IncidentsList() {
                         Resolver
                       </Button>
                     )}
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => exportAsImage(incident)}
+                      className="text-primary border-primary hover:bg-primary hover:text-white"
+                    >
+                      <FileImage className="h-4 w-4 mr-1" />
+                      Exportar IMG
+                    </Button>
+                    <Button 
+                      size="sm"
+                      variant="outline"
+                      onClick={() => exportAsVideo(incident)}
+                      className="text-secondary border-secondary hover:bg-secondary hover:text-white"
+                    >
+                      <FileVideo className="h-4 w-4 mr-1" />
+                      Exportar Dados
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
