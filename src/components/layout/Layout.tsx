@@ -23,6 +23,13 @@ const menuItems = [
 
 export default function Layout({ children, activeTab = "dashboard", onTabChange }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, role, signOut } = useAuth();
+  const initials = ((user?.user_metadata?.full_name as string) || user?.email || "U")
+    .split(" ")
+    .map((p: string) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <div className="flex h-screen bg-background">
@@ -103,12 +110,15 @@ export default function Layout({ children, activeTab = "dashboard", onTabChange 
             
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium">Bem-vindo de volta!</p>
-                <p className="text-xs text-muted-foreground">Administrador</p>
+                <p className="text-sm font-medium">{(user?.user_metadata?.full_name as string) || user?.email}</p>
+                <p className="text-xs text-muted-foreground capitalize">{role ?? "Usuário"}</p>
               </div>
               <div className="h-10 w-10 bg-gradient-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-medium">JS</span>
+                <span className="text-white font-medium">{initials}</span>
               </div>
+              <Button variant="ghost" size="sm" onClick={signOut} title="Sair">
+                <LogOut className="h-5 w-5" />
+              </Button>
             </div>
           </div>
         </header>
