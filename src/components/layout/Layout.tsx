@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Building2, Menu, X, Home, Users, AlertTriangle, Megaphone, DollarSign, Calendar, Settings } from "lucide-react";
+import { Building2, Menu, X, Home, Users, AlertTriangle, Megaphone, DollarSign, Calendar, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: React.ReactNode;
