@@ -31,6 +31,7 @@ export default function Auth() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupRole, setSignupRole] = useState<"sindico" | "morador">("morador");
 
   useEffect(() => {
@@ -87,6 +88,9 @@ export default function Auth() {
       nameSchema.parse(signupName);
       emailSchema.parse(signupEmail);
       passwordSchema.parse(signupPassword);
+      if (signupPassword !== signupConfirmPassword) {
+        throw new Error("As senhas não coincidem");
+      }
 
       const { error } = await supabase.auth.signUp({
         email: signupEmail,
@@ -165,6 +169,10 @@ export default function Auth() {
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Senha</Label>
                   <Input id="signup-password" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required minLength={6} maxLength={72} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Repetir senha</Label>
+                  <Input id="signup-confirm-password" type="password" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} required minLength={6} maxLength={72} />
                 </div>
                 <div className="space-y-2">
                   <Label>Perfil</Label>
