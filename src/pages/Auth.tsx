@@ -31,6 +31,7 @@ export default function Auth() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupRole, setSignupRole] = useState<"sindico" | "morador">("morador");
 
   useEffect(() => {
@@ -87,6 +88,9 @@ export default function Auth() {
       nameSchema.parse(signupName);
       emailSchema.parse(signupEmail);
       passwordSchema.parse(signupPassword);
+      if (signupPassword !== signupConfirmPassword) {
+        throw new Error("As senhas não coincidem");
+      }
 
       const { error } = await supabase.auth.signUp({
         email: signupEmail,
