@@ -1,426 +1,244 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, DollarSign, Calendar, TrendingUp, TrendingDown, Download, Upload, CreditCard, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Search, Plus, Calendar, TrendingUp, TrendingDown, AlertCircle, Building2, Trash2, Edit } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserCondominiums } from "@/hooks/useUserCondominiums";
 
-interface Transaction {
+interface Tx {
   id: string;
-  type: "income" | "expense";
+  condominium_id: string;
+  created_by: string;
+  type: string;
   description: string;
   amount: number;
-  apartment?: string;
-  category: string;
+  apartment: string | null;
+  category: string | null;
+  status: string;
+  due_date: string | null;
   date: string;
-  status: "pending" | "completed" | "cancelled";
-  dueDate?: string;
 }
 
-const mockTransactions: Transaction[] = [
-  {
-    id: "1",
-    type: "income",
-    description: "Taxa de condomínio - Janeiro 2024",
-    amount: 450.00,
-    apartment: "Apt 101",
-    category: "Condomínio",
-    date: "2024-01-15T10:00:00",
-    status: "completed"
-  },
-  {
-    id: "2",
-    type: "expense", 
-    description: "Manutenção elevador",
-    amount: 2500.00,
-    category: "Manutenção",
-    date: "2024-01-14T14:30:00",
-    status: "completed"
-  },
-  {
-    id: "3",
-    type: "income",
-    description: "Taxa de condomínio - Janeiro 2024",
-    amount: 450.00,
-    apartment: "Apt 205",
-    category: "Condomínio",
-    date: "2024-01-10T08:00:00",
-    status: "pending",
-    dueDate: "2024-01-20T23:59:59"
-  },
-  {
-    id: "4",
-    type: "expense",
-    description: "Conta de luz - Área comum",
-    amount: 850.00,
-    category: "Utilidades",
-    date: "2024-01-12T16:00:00",
-    status: "completed"
-  },
-  {
-    id: "5",
-    type: "income",
-    description: "Taxa de limpeza",
-    amount: 25.00,
-    apartment: "Apt 304",
-    category: "Limpeza",
-    date: "2024-01-13T09:15:00",
-    status: "completed"
-  }
-];
+const formatCurrency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
 export default function FinancialManager() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user, role } = useAuth();
+  const { toast } = useToast();
+  const { condominiums } = useUserCondominiums();
+  const [txs, setTxs] = useState<(Tx & { condo_name?: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [showDialog, setShowDialog] = useState(false);
-  const [newTransaction, setNewTransaction] = useState({
-    type: "income" as const,
-    description: "",
-    amount: 0,
-    apartment: "",
-    category: "",
-    dueDate: ""
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Tx | null>(null);
+  const [form, setForm] = useState<Partial<Tx>>({ type: "income", status: "pending" });
+
+  const isSindico = role === "sindico";
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("transactions").select("*, condominiums(name)").order("date", { ascending: false });
+    setTxs((data ?? []).map((t: any) => ({ ...t, condo_name: t.condominiums?.name, amount: Number(t.amount) })));
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = txs.filter(t => {
+    const m = t.description.toLowerCase().includes(search.toLowerCase());
+    const f = filterType === "all" || t.type === filterType;
+    return m && f;
   });
 
-  const filteredTransactions = mockTransactions.filter(transaction => {
-    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (transaction.apartment && transaction.apartment.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesType = filterType === "all" || transaction.type === filterType;
-    const matchesStatus = filterStatus === "all" || transaction.status === filterStatus;
-    
-    return matchesSearch && matchesType && matchesStatus;
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const getStatusConfig = (status: string) => {
-    const configs = {
-      pending: { label: "Pendente", className: "bg-warning/20 text-warning" },
-      completed: { label: "Concluído", className: "bg-success/20 text-success" },
-      cancelled: { label: "Cancelado", className: "bg-destructive/20 text-destructive" }
-    };
-    return configs[status as keyof typeof configs] || configs.pending;
+  const submit = async () => {
+    if (!form.description || !form.amount || !form.condominium_id) {
+      return toast({ title: "Erro", description: "Descrição, valor e condomínio obrigatórios", variant: "destructive" });
+    }
+    if (editing) {
+      const { error } = await supabase.from("transactions").update({
+        type: form.type, description: form.description, amount: form.amount,
+        apartment: form.apartment, category: form.category, status: form.status, due_date: form.due_date,
+      }).eq("id", editing.id);
+      if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Atualizada!" });
+    } else {
+      const { error } = await supabase.from("transactions").insert({
+        condominium_id: form.condominium_id!, created_by: user!.id,
+        type: form.type ?? "income", description: form.description!,
+        amount: form.amount!, apartment: form.apartment ?? null,
+        category: form.category ?? null, status: form.status ?? "pending",
+        due_date: form.due_date ?? null,
+      });
+      if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Transação criada!" });
+    }
+    setForm({ type: "income", status: "pending" }); setEditing(null); setOpen(false); load();
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(amount);
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("transactions").delete().eq("id", id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    toast({ title: "Removida" }); load();
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
-  // Calculate totals
-  const totalIncome = mockTransactions
-    .filter(t => t.type === "income" && t.status === "completed")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalExpenses = mockTransactions
-    .filter(t => t.type === "expense" && t.status === "completed")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const pendingIncome = mockTransactions
-    .filter(t => t.type === "income" && t.status === "pending")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const balance = totalIncome - totalExpenses;
-
-  const handleCreateTransaction = () => {
-    console.log("Creating transaction:", newTransaction);
-    setNewTransaction({
-      type: "income",
-      description: "",
-      amount: 0,
-      apartment: "",
-      category: "",
-      dueDate: ""
-    });
-    setShowDialog(false);
-  };
+  const totalIncome = txs.filter(t => t.type === "income" && t.status === "completed").reduce((s, t) => s + t.amount, 0);
+  const totalExp = txs.filter(t => t.type === "expense" && t.status === "completed").reduce((s, t) => s + t.amount, 0);
+  const pending = txs.filter(t => t.type === "income" && t.status === "pending").reduce((s, t) => s + t.amount, 0);
+  const balance = totalIncome - totalExp;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Gestão Financeira</h1>
-          <p className="text-muted-foreground mt-1">
-            Controle receitas, despesas e inadimplência
-          </p>
+          <p className="text-muted-foreground mt-1">{isSindico ? "Controle financeiro dos condomínios" : "Financeiro do seu condomínio"}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        {isSindico && (
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditing(null); setForm({ type: "income", status: "pending" }); } }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:opacity-90 shadow-primary">
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Transação
-              </Button>
+              <Button className="bg-gradient-primary"><Plus className="h-4 w-4 mr-2" />Nova Transação</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Criar Nova Transação</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>{editing ? "Editar" : "Nova"} Transação</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Tipo</label>
-                    <select 
-                      className="w-full p-2 border rounded-lg"
-                      value={newTransaction.type}
-                      onChange={(e) => setNewTransaction({...newTransaction, type: e.target.value as any})}
-                    >
-                      <option value="income">Receita</option>
-                      <option value="expense">Despesa</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Valor</label>
-                    <Input
-                      type="number"
-                      value={newTransaction.amount}
-                      onChange={(e) => setNewTransaction({...newTransaction, amount: parseFloat(e.target.value)})}
-                      placeholder="0,00"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Descrição</label>
-                  <Input
-                    value={newTransaction.description}
-                    onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
-                    placeholder="Descrição da transação..."
-                  />
+                <div className="space-y-2">
+                  <Label>Condomínio *</Label>
+                  <Select value={form.condominium_id || ""} onValueChange={(v) => setForm({ ...form, condominium_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{condominiums.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Apartamento (opcional)</label>
-                    <Input
-                      value={newTransaction.apartment}
-                      onChange={(e) => setNewTransaction({...newTransaction, apartment: e.target.value})}
-                      placeholder="Apt 101"
-                    />
+                  <div className="space-y-2">
+                    <Label>Tipo</Label>
+                    <Select value={form.type || "income"} onValueChange={(v) => setForm({ ...form, type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">Receita</SelectItem>
+                        <SelectItem value="expense">Despesa</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Categoria</label>
-                    <Input
-                      value={newTransaction.category}
-                      onChange={(e) => setNewTransaction({...newTransaction, category: e.target.value})}
-                      placeholder="Categoria"
-                    />
+                  <div className="space-y-2">
+                    <Label>Valor *</Label>
+                    <Input type="number" step="0.01" value={form.amount ?? ""} onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })} />
                   </div>
                 </div>
-                {newTransaction.type === "income" && (
-                  <div>
-                    <label className="text-sm font-medium">Data de Vencimento</label>
-                    <Input
-                      type="date"
-                      value={newTransaction.dueDate}
-                      onChange={(e) => setNewTransaction({...newTransaction, dueDate: e.target.value})}
-                    />
+                <div className="space-y-2"><Label>Descrição *</Label><Input value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Apartamento</Label><Input value={form.apartment || ""} onChange={(e) => setForm({ ...form, apartment: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Categoria</Label><Input value={form.category || ""} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={form.status || "pending"} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="completed">Concluído</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-                <div className="flex gap-2 pt-4">
-                  <Button onClick={handleCreateTransaction} className="bg-gradient-primary">
-                    Criar Transação
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowDialog(false)}>
-                    Cancelar
-                  </Button>
+                  <div className="space-y-2">
+                    <Label>Vencimento</Label>
+                    <Input type="date" value={form.due_date || ""} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+                  </div>
                 </div>
               </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button onClick={submit} className="bg-gradient-primary">{editing ? "Salvar" : "Criar"}</Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
-        </div>
+        )}
       </div>
 
-      {/* Financial Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="p-6 shadow-medium">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Saldo Atual</p>
-              <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {formatCurrency(balance)}
-              </p>
-            </div>
-            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${balance >= 0 ? 'bg-success' : 'bg-destructive'}`}>
-              {balance >= 0 ? (
-                <TrendingUp className="h-6 w-6 text-white" />
-              ) : (
-                <TrendingDown className="h-6 w-6 text-white" />
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 shadow-medium">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Receitas</p>
-              <p className="text-3xl font-bold mt-2 text-success">{formatCurrency(totalIncome)}</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-success flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 shadow-medium">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Despesas</p>
-              <p className="text-3xl font-bold mt-2 text-destructive">{formatCurrency(totalExpenses)}</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-destructive flex items-center justify-center">
-              <TrendingDown className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 shadow-medium">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Pendente</p>
-              <p className="text-3xl font-bold mt-2 text-warning">{formatCurrency(pendingIncome)}</p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-warning flex items-center justify-center">
-              <AlertCircle className="h-6 w-6 text-white" />
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground">Saldo</p>
+          <p className={`text-2xl font-bold mt-1 ${balance >= 0 ? "text-success" : "text-destructive"}`}>{formatCurrency(balance)}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground">Receitas</p>
+          <p className="text-2xl font-bold mt-1 text-success">{formatCurrency(totalIncome)}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground">Despesas</p>
+          <p className="text-2xl font-bold mt-1 text-destructive">{formatCurrency(totalExp)}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-6">
+          <p className="text-sm text-muted-foreground">Pendente</p>
+          <p className="text-2xl font-bold mt-1 text-warning">{formatCurrency(pending)}</p>
+        </CardContent></Card>
       </div>
 
-      {/* Filters */}
-      <Card className="p-6 shadow-medium">
+      <Card><CardContent className="pt-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar transações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
           </div>
           <div className="flex gap-2">
-            <Button
-              variant={filterType === "all" ? "default" : "outline"}
-              onClick={() => setFilterType("all")}
-              size="sm"
-            >
-              Todas
-            </Button>
-            <Button
-              variant={filterType === "income" ? "default" : "outline"}
-              onClick={() => setFilterType("income")}
-              size="sm"
-            >
-              Receitas
-            </Button>
-            <Button
-              variant={filterType === "expense" ? "default" : "outline"}
-              onClick={() => setFilterType("expense")}
-              size="sm"
-            >
-              Despesas
-            </Button>
-            <Button
-              variant={filterStatus === "pending" ? "default" : "outline"}
-              onClick={() => setFilterStatus("pending")}
-              size="sm"
-            >
-              Pendentes
-            </Button>
+            {[{v:"all",l:"Todas"},{v:"income",l:"Receitas"},{v:"expense",l:"Despesas"}].map(o => (
+              <Button key={o.v} size="sm" variant={filterType === o.v ? "default" : "outline"} onClick={() => setFilterType(o.v)}>{o.l}</Button>
+            ))}
           </div>
         </div>
-      </Card>
+      </CardContent></Card>
 
-      {/* Transactions List */}
-      <Card className="shadow-medium">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold">Histórico de Transações ({filteredTransactions.length})</h3>
-        </div>
-        <div className="divide-y">
-          {filteredTransactions.map((transaction) => {
-            const statusConfig = getStatusConfig(transaction.status);
-            const isIncome = transaction.type === "income";
-
-            return (
-              <div key={transaction.id} className="p-6 hover:bg-muted/30 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                      isIncome ? 'bg-success/20' : 'bg-destructive/20'
-                    }`}>
-                      {isIncome ? (
-                        <TrendingUp className={`h-6 w-6 ${isIncome ? 'text-success' : 'text-destructive'}`} />
-                      ) : (
-                        <TrendingDown className={`h-6 w-6 ${isIncome ? 'text-success' : 'text-destructive'}`} />
-                      )}
+      {loading ? <p className="text-center text-muted-foreground">Carregando...</p> :
+        filtered.length === 0 ? <Card><CardContent className="pt-6 text-center text-muted-foreground">Nenhuma transação.</CardContent></Card> :
+        <Card>
+          <div className="divide-y">
+            {filtered.map(t => {
+              const isIncome = t.type === "income";
+              return (
+                <div key={t.id} className="p-6 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className={`h-12 w-12 rounded-full flex items-center justify-center ${isIncome ? "bg-success/20" : "bg-destructive/20"}`}>
+                      {isIncome ? <TrendingUp className="h-6 w-6 text-success" /> : <TrendingDown className="h-6 w-6 text-destructive" />}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h4 className="font-medium">{transaction.description}</h4>
-                        <Badge variant="outline" className={statusConfig.className}>
-                          {statusConfig.label}
-                        </Badge>
-                        <Badge variant="outline">
-                          {transaction.category}
-                        </Badge>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-medium">{t.description}</h4>
+                        <Badge variant="outline">{t.status}</Badge>
+                        {t.category && <Badge variant="outline">{t.category}</Badge>}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(transaction.date)}
-                        </div>
-                        {transaction.apartment && (
-                          <div className="flex items-center">
-                            <CreditCard className="h-4 w-4 mr-1" />
-                            {transaction.apartment}
-                          </div>
-                        )}
-                        {transaction.dueDate && transaction.status === "pending" && (
-                          <div className="flex items-center">
-                            <AlertCircle className="h-4 w-4 mr-1" />
-                            Vence em {formatDate(transaction.dueDate)}
-                          </div>
-                        )}
+                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                        <span className="flex items-center"><Building2 className="h-4 w-4 mr-1" />{t.condo_name}</span>
+                        <span className="flex items-center"><Calendar className="h-4 w-4 mr-1" />{new Date(t.date).toLocaleDateString("pt-BR")}</span>
+                        {t.apartment && <span>{t.apartment}</span>}
+                        {t.due_date && t.status === "pending" && <span className="flex items-center"><AlertCircle className="h-4 w-4 mr-1" />Vence: {new Date(t.due_date).toLocaleDateString("pt-BR")}</span>}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-xl font-bold ${isIncome ? 'text-success' : 'text-destructive'}`}>
-                      {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+                    <p className={`text-xl font-bold ${isIncome ? "text-success" : "text-destructive"}`}>
+                      {isIncome ? "+" : "-"}{formatCurrency(t.amount)}
                     </p>
-                    <div className="flex gap-2 mt-2">
-                      <Button variant="outline" size="sm">
-                        Editar
-                      </Button>
-                      {transaction.status === "pending" && (
-                        <Button size="sm" className="bg-success">
-                          Confirmar
-                        </Button>
-                      )}
-                    </div>
+                    {isSindico && (
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <Button variant="outline" size="sm" onClick={() => { setEditing(t); setForm(t); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="outline" size="sm" className="text-destructive" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
+              );
+            })}
+          </div>
+        </Card>
+      }
     </div>
   );
 }

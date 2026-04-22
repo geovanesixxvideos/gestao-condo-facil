@@ -14,6 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          apartment: string | null
+          area: string
+          condominium_id: string
+          created_at: string
+          created_by: string
+          date: string
+          email: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          phone: string | null
+          resident_name: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          apartment?: string | null
+          area: string
+          condominium_id: string
+          created_at?: string
+          created_by: string
+          date: string
+          email?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          resident_name: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          apartment?: string | null
+          area?: string
+          condominium_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          email?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          resident_name?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      condominiums: {
+        Row: {
+          address: string
+          created_at: string
+          created_by: string
+          description: string | null
+          email: string | null
+          id: string
+          manager_name: string | null
+          name: string
+          phone: string | null
+          status: string
+          type: string
+          units: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          manager_name?: string | null
+          name: string
+          phone?: string | null
+          status?: string
+          type?: string
+          units?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          manager_name?: string | null
+          name?: string
+          phone?: string | null
+          status?: string
+          type?: string
+          units?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      incidents: {
+        Row: {
+          apartment: string | null
+          category: string
+          condominium_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          priority: string
+          resident_name: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          apartment?: string | null
+          category?: string
+          condominium_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resident_name?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          apartment?: string | null
+          category?: string
+          condominium_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resident_name?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notices: {
+        Row: {
+          author: string | null
+          category: string
+          condominium_id: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          pinned: boolean
+          priority: string
+          title: string
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          author?: string | null
+          category?: string
+          condominium_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          pinned?: boolean
+          priority?: string
+          title: string
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          author?: string | null
+          category?: string
+          condominium_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          pinned?: boolean
+          priority?: string
+          title?: string
+          updated_at?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -37,6 +256,115 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      residents: {
+        Row: {
+          apartment: string
+          condominium_id: string
+          created_at: string
+          email: string
+          id: string
+          join_date: string
+          name: string
+          phone: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          apartment: string
+          condominium_id: string
+          created_at?: string
+          email: string
+          id?: string
+          join_date?: string
+          name: string
+          phone?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          apartment?: string
+          condominium_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          join_date?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "residents_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          apartment: string | null
+          category: string | null
+          condominium_id: string
+          created_at: string
+          created_by: string
+          date: string
+          description: string
+          due_date: string | null
+          id: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          apartment?: string | null
+          category?: string | null
+          condominium_id: string
+          created_at?: string
+          created_by: string
+          date?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          apartment?: string | null
+          category?: string | null
+          condominium_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: false
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -68,6 +396,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_condominium_ids: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
       app_role: "sindico" | "morador"
