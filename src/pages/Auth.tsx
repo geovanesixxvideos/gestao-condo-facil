@@ -171,6 +171,10 @@ export default function Auth() {
                   <Input id="signup-password" type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required minLength={6} maxLength={72} />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Repetir senha</Label>
+                  <Input id="signup-confirm-password" type="password" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} required minLength={6} maxLength={72} />
+                </div>
+                <div className="space-y-2">
                   <Label>Perfil</Label>
                   <Select value={signupRole} onValueChange={(v) => setSignupRole(v as "sindico" | "morador")}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
