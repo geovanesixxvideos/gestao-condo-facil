@@ -31,7 +31,7 @@ const Index = () => {
       case "settings":
         return <SettingsPanel />;
       default:
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveTab} />;
     }
   };
 
