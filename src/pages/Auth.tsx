@@ -142,7 +142,7 @@ export default function Auth() {
                   <Input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required maxLength={72} />
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Entrando..." : "Entrar"}
+                  <span>{submitting ? "Entrando..." : "Entrar"}</span>
                 </Button>
                 <div className="text-center">
                   <button
@@ -185,7 +185,7 @@ export default function Auth() {
                   </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Criando..." : "Criar conta"}
+                  <span>{submitting ? "Criando..." : "Criar conta"}</span>
                 </Button>
               </form>
             </TabsContent>
@@ -214,7 +214,7 @@ export default function Auth() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Enviando..." : "Enviar link"}
+              <span>{submitting ? "Enviando..." : "Enviar link"}</span>
             </Button>
           </form>
         </DialogContent>
