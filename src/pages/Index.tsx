@@ -8,9 +8,12 @@ import NoticesList from "@/components/notices/NoticesList";
 import FinancialManager from "@/components/financial/FinancialManager";
 import BookingsList from "@/components/bookings/BookingsList";
 import SettingsPanel from "@/components/settings/SettingsPanel";
+import { CondoFilterProvider } from "@/hooks/useCondoFilter";
+import { useRealtimeAlerts } from "@/hooks/useRealtimeAlerts";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  useRealtimeAlerts();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -36,9 +39,11 @@ const Index = () => {
   };
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderContent()}
-    </Layout>
+    <CondoFilterProvider>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+        {renderContent()}
+      </Layout>
+    </CondoFilterProvider>
   );
 };
 
