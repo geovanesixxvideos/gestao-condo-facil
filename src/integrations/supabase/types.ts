@@ -76,6 +76,83 @@ export type Database = {
           },
         ]
       }
+      condominium_settings: {
+        Row: {
+          admin_email: string | null
+          admin_name: string | null
+          admin_phone: string | null
+          auto_generate_bills: boolean
+          cnpj: string | null
+          condominium_id: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          default_due_day: number
+          email_notifications: boolean
+          event_notifications: boolean
+          id: string
+          interest_rate_percent: number
+          late_fee_percent: number
+          maintenance_alerts: boolean
+          minimum_balance: number
+          payment_reminders: boolean
+          push_notifications: boolean
+          updated_at: string
+        }
+        Insert: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          auto_generate_bills?: boolean
+          cnpj?: string | null
+          condominium_id: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_due_day?: number
+          email_notifications?: boolean
+          event_notifications?: boolean
+          id?: string
+          interest_rate_percent?: number
+          late_fee_percent?: number
+          maintenance_alerts?: boolean
+          minimum_balance?: number
+          payment_reminders?: boolean
+          push_notifications?: boolean
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          auto_generate_bills?: boolean
+          cnpj?: string | null
+          condominium_id?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          default_due_day?: number
+          email_notifications?: boolean
+          event_notifications?: boolean
+          id?: string
+          interest_rate_percent?: number
+          late_fee_percent?: number
+          maintenance_alerts?: boolean
+          minimum_balance?: number
+          payment_reminders?: boolean
+          push_notifications?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "condominium_settings_condominium_id_fkey"
+            columns: ["condominium_id"]
+            isOneToOne: true
+            referencedRelation: "condominiums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       condominiums: {
         Row: {
           address: string
